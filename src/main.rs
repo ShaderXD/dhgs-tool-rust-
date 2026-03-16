@@ -1,5 +1,25 @@
 use std::io::{self, Write};
 use std::process::Command;
+use std::fs::File;
+use simplelog::CombinedLogger;
+use log::LevelFilter;
+use simplelog::WriteLogger;
+use simplelog::*;
+
+fn service() {
+  println!("test");
+}
+
+fn logging() {
+    CombinedLogger::init(vec![
+        TermLogger::new(LevelFilter::Warn, Config::default(), TerminalMode::Mixed, ColorChoice::Auto),
+        WriteLogger::new(LevelFilter::Info, Config::default(), File::create("system.txt").unwrap()),
+
+    ]).unwrap();
+
+    log::info!("System check started...")
+}
+
 
 fn ui() {
      // This override prevents the 0xc000013a crash
@@ -10,7 +30,7 @@ fn ui() {
 
 
     loop {
-        print!("1. DDoS\n2. Info\n3. Exit\n--> ");
+        print!("1. DDoS\n2. Info\n3. System Info\n4. Exit\n--> ");
         io::stdout().flush().unwrap();
 
         let mut input = String::new();
@@ -32,9 +52,13 @@ fn ui() {
                 }
             }
             "2" => {
-                println!("This is some information.");
+                service();
             }
             "3" => {
+              logging();
+            }
+            
+            "4" => {
                 println!("Exiting...");
                 break;
             }
