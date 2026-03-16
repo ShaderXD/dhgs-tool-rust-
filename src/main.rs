@@ -2,22 +2,37 @@ use std::io::{self, Write};
 use std::process::Command;
 use std::fs::File;
 use simplelog::CombinedLogger;
-use log::LevelFilter;
+use log::{LevelFilter, info};
 use simplelog::WriteLogger;
 use simplelog::*;
+use sysinfo::System;
+
 
 fn service() {
   println!("test");
 }
 
 fn logging() {
+    
+
     CombinedLogger::init(vec![
         TermLogger::new(LevelFilter::Warn, Config::default(), TerminalMode::Mixed, ColorChoice::Auto),
         WriteLogger::new(LevelFilter::Info, Config::default(), File::create("system.txt").unwrap()),
 
     ]).unwrap();
 
-    log::info!("System check started...")
+    log::info!("System check started...");
+    
+    let mut sys = System::new_all();
+    sys.refresh_all();
+
+    if let Some(k_ver) = System::kernel_version() {
+       info!("Kenrnel Version: {}", k_ver);
+    }
+    info!("Total Memory: {} KB", sys.total_memory());
+    info!("Active Processes: {}", sys.processes().len());
+
+    info!("System check completed.");
 }
 
 
