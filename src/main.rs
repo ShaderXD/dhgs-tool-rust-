@@ -9,8 +9,68 @@ use sysinfo::System;
 
 
 fn service() {
-  println!("test");
+
+    let  result = ctrlc::try_set_handler(move || {
+      println!("\n[Signal] Ctrl+C detected! Exiting cleanly...");
+      std::process::exit(0); 
+    });
+
+  // This override prevents the 0xc000013a crash
+    if let  Err(ctrlc::Error::MultipleHandlers) = result {
+
+    } else {
+      result.expect("Error setting Ctrl-C handler");
+    }
+
+
+    
+    loop {
+        print!("1. Git\n2. AUR\n3. HTTPS\n4. Exit\n--> ");
+        io::stdout().flush().unwrap();
+
+        let mut input = String::new();
+        if io::stdin().read_line(&mut input).is_err() {
+            break;
+        }
+        match input.trim() {
+            "1" => {
+              let mut choice = String::new();
+
+              println!("Please Enter: the username/reponame like this");
+              io::stdin()
+                  .read_line(&mut choice)
+                  .expect("Failed to read line");
+
+              let  status = Command::new("git")
+                   .arg("clone")
+                   .arg(format!("https://github.com/{}", choice.trim()))
+                   .status()
+                   .expect("Failed to execute git clone");
+              if status.success() {
+                println!("Clone successful!");
+              } else {
+                eprintln!("Clone failed."); 
+              }
+
+            }
+            "2" => {
+                
+            }
+            "3" => {
+              
+            }
+            
+            "4" => {
+                println!("Exiting...");
+                break;
+            }
+            _ => {
+                println!("Invalid option, please try again.");
+            }
+        }   
+    }
 }
+
 
 fn logging() {
     
@@ -45,7 +105,7 @@ fn ui() {
 
 
     loop {
-        print!("1. DDoS\n2. Info\n3. System Info\n4. Exit\n--> ");
+        print!("1. DDoS\n2. Git\n3. System Info\n4. Exit\n--> ");
         io::stdout().flush().unwrap();
 
         let mut input = String::new();
