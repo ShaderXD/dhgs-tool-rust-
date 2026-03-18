@@ -54,10 +54,43 @@ fn service() {
 
             }
             "2" => {
+                 let mut choice = String::new();
+
+              println!("Please Enter: the reponame like this");
+              io::stdin()
+                  .read_line(&mut choice)
+                  .expect("Failed to read line");
+
+              let  status = Command::new("git")
+                   .arg("clone")
+                   .arg(format!("https://aur.archlinux.org/{}", choice.trim()))
+                   .status()
+                   .expect("Failed to execute git clone");
+              if status.success() {
+                println!("Clone successful!");
+              } else {
+                eprintln!("Clone failed."); 
+              }
                 
             }
             "3" => {
-              
+                   let mut choice = String::new();
+
+              println!("Please Enter: the HTTPS like this");
+              io::stdin()
+                  .read_line(&mut choice)
+                  .expect("Failed to read line");
+
+              let  status = Command::new("git")
+                   .arg("clone")
+                   .arg(choice.trim())
+                   .status()
+                   .expect("Failed to execute git clone");
+              if status.success() {
+                println!("Clone successful!");
+              } else {
+                eprintln!("Clone failed."); 
+              }
             }
             
             "4" => {
