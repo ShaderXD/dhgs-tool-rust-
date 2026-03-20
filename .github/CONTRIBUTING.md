@@ -2,7 +2,7 @@
   <h1>Contribution Guidelines<h1>
 </div>
 
-Hello I'm **Nora** (@transcrime), the main maintainer of **LiveChatPython**. Thank you for taking the time to contribute! To keep the project maintainable and easy for everyone to understand, please follow these guidelines:
+Hello I'm **Nora** (@transcrime), the main maintainer of **dhgs-tool-rust-**. Thank you for taking the time to contribute! To keep the project maintainable and easy for everyone to understand, please follow these guidelines:
 
 ### 🏗️ Code Quality & Style
 - **Readability:** Do not have a complete unreadable code Beyond. 
