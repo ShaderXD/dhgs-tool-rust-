@@ -1,4 +1,4 @@
-use std::io::{self, Write};
+use std::io::{self, stdin, stdout, Write};
 use std::process::Command;
 use std::fs::File;
 use simplelog::CombinedLogger;
@@ -6,8 +6,28 @@ use log::{LevelFilter, info};
 use simplelog::WriteLogger;
 use simplelog::*;
 use sysinfo::System;
+use std::path::Path;
 
 
+fn yes_no_prompt(prompt_message: &str) -> bool {
+ loop {
+     println!("{} (y/n): ", prompt_message);
+     let  _ = stdout().flush();
+     let mut input = String::new();
+     stdin().read_line(&mut input).expect("Failed to read line");
+
+     match input.trim_end().to_lowercase().as_str() {
+       "y" | "yes" => return true,
+       "n" | "no" => return false,
+       _ => println!("Invalid input. Please enter 'y' or 'n'.")
+     }
+
+ }
+
+ }
+
+
+ 
 fn service() {
 
     let  result = ctrlc::try_set_handler(move || {
@@ -33,7 +53,7 @@ fn service() {
             break;
         }
         match input.trim() {
-            "1" => {
+            "1" => { 
               let mut choice = String::new();
 
               println!("Please Enter: the username/reponame like this");
@@ -54,6 +74,7 @@ fn service() {
 
             }
             "2" => {
+              if cfg!(target_os = "windows") {
                  let mut choice = String::new();
 
               println!("Please Enter: the reponame like this");
@@ -68,10 +89,26 @@ fn service() {
                    .expect("Failed to execute git clone");
               if status.success() {
                 println!("Clone successful!");
+                let clean_choice = choice.trim().strip_suffix(".git").unwrap_or(choice.trim());
+                let path = Path::new(clean_choice).join("PKGBUILD");
+                if path.exists() {
+                 if yes_no_prompt("There is PKGBUILD build file found: try build? ") {
+                    let _status = Command::new("makepkg")
+                      .arg("-si")
+                      .status()
+                      .expect("Failed to execute building");  
+                 } else {
+                  println!("Exiting");   
+                 }
+                } else {
+                 println!("There no PKGBUILD file found");
+                }
               } else {
                 eprintln!("Clone failed."); 
               }
-                
+             } else {
+              println!("Your not on [LINUX] Error:....")
+             }  
             }
             "3" => {
                    let mut choice = String::new();
