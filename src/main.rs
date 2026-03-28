@@ -1,3 +1,4 @@
+use log::error;
 use log::{LevelFilter, info};
 use simplelog::CombinedLogger;
 use simplelog::WriteLogger;
@@ -8,12 +9,52 @@ use std::path::Path;
 use std::process::Command;
 use sysinfo::System;
 
+struct Logger(CombinedLogger); // this struct before i didn't waht struct was but i'm head just hurt
+  impl Logger {
+    fn log_init() { // 1 to 2 hors to find out i knew i was bad but damn i'm that bad just sad
+      let _ = CombinedLogger::init(vec![ 
+        TermLogger::new(
+            LevelFilter::Warn, // Log to terminal with warning level and above
+            Config::default(),
+            TerminalMode::Mixed,
+            ColorChoice::Auto,
+        ), // Log to terminal with warning level and above
+        WriteLogger::new(
+            LevelFilter::Info, // Log to file with info level and above
+            Config::default(),
+            File::create("system.txt").unwrap(),
+        ),
+       ]
+     );   
+     info!("Logger initialized and running!"); // Log an info message to confirm initialization
+  }
+}
+
+
+    
+
+fn logging() { // Initialize logging to both terminal and file
+    Logger::log_init(); // Initialize the logger
+    log::info!("System check started...");
+
+    let mut sys = System::new_all();
+    sys.refresh_all();
+    // Log some basic system information
+    if let Some(k_ver) = System::kernel_version() {
+        info!("Kenrnel Version: {}", k_ver);
+    }
+    info!("Total Memory: {} KB", sys.total_memory());
+    info!("Active Processes: {}", sys.processes().len());
+
+    info!("System check completed.");
+}
+
 fn yes_no_prompt(prompt_message: &str) -> bool {
     loop {
-        println!("{} (y/n): ", prompt_message);
+        println!("{} (y/n): ", prompt_message); // Print the prompt message
         let _ = stdout().flush();
         let mut input = String::new();
-        stdin().read_line(&mut input).expect("Failed to read line");
+        stdin().read_line(&mut input).expect("Failed to read line"); // Read user input
 
         match input.trim_end().to_lowercase().as_str() {
             "y" | "yes" => return true,
@@ -23,7 +64,8 @@ fn yes_no_prompt(prompt_message: &str) -> bool {
     }
 }
 
-fn service() {
+fn service() { // This function handles the Git and AUR cloning and building logic
+    Logger::log_init(); // Initialize the logger
     let result = ctrlc::try_set_handler(move || {
         println!("\n[Signal] Ctrl+C detected! Exiting cleanly...");
         std::process::exit(0);
@@ -44,14 +86,14 @@ fn service() {
             break;
         }
         match input.trim() {
-            "1" => {
+            "1" => { // GIT REPO CLONE AND BUILD BUT NOT WORKING AT THE MOMENT
                 let mut choice = String::new();
 
                 println!("Please Enter: the username/reponame like this");
                 io::stdin()
                     .read_line(&mut choice)
                     .expect("Failed to read line");
-
+                // git repo clone -- cmake build system is not working yet, but it will be added in the future
                 let status = Command::new("git")
                     .arg("clone")
                     .arg(format!("https://github.com/{}", choice.trim()))
@@ -59,7 +101,9 @@ fn service() {
                     .expect("Failed to execute git clone");
                 if status.success() {
                     println!("Clone successful!");
-
+                    info!("Successful clone repo: (Github)");
+                    
+                 
                     let folder_name = choice.split('/').last().unwrap_or("");
 
                     if yes_no_prompt("There is CMAKE build file found: try build? ") {
@@ -94,9 +138,11 @@ fn service() {
                     }
                 } else {
                     eprintln!("Clone failed.");
+                    error!("Failed clone repo: (Github)");
                 }
             }
-            "2" => {
+            "2" => { // AUR REPO CLONE AND BUILD 
+                // run a see your on linux if not it will show error message, because this is only for linux, but it will be added in the future for windows too, but for now it will be only for linux
                 if cfg!(target_os = "windows") {
                     let mut choice = String::new();
 
@@ -104,7 +150,7 @@ fn service() {
                     io::stdin()
                         .read_line(&mut choice)
                         .expect("Failed to read line");
-
+                    // git AUR repo and automatically build it with makepkg -si, but only for linux, because windows don't have makepkg
                     let status = Command::new("git")
                         .arg("clone")
                         .arg(format!("https://aur.archlinux.org/{}", choice.trim()))
@@ -112,6 +158,7 @@ fn service() {
                         .expect("Failed to execute git clone");
                     if status.success() {
                         println!("Clone successful!");
+                        info!("Successful clone repo: (AUR)");
                         let clean_choice =
                             choice.trim().strip_suffix(".git").unwrap_or(choice.trim());
                         let path = Path::new(clean_choice).join("PKGBUILD");
@@ -126,12 +173,15 @@ fn service() {
                             }
                         } else {
                             println!("There no PKGBUILD file found");
+                            info!("No PKGBUILD file found")
                         }
                     } else {
                         eprintln!("Clone failed.");
+                        error!("Failed clone repo: (AUR)");
                     }
                 } else {
-                    println!("Your not on [LINUX] Error:....")
+                    println!("Your not on [LINUX] Error:....");
+                    error!("Your not on [linux] can't build");
                 }
             }
             "3" => {
@@ -150,7 +200,7 @@ fn service() {
                 if status.success() {
                     println!("Clone successful!");
                 } else {
-                    eprintln!("Clone failed.");
+                    eprintln!("Clone failed.");   
                 }
             }
 
@@ -165,37 +215,8 @@ fn service() {
     }
 }
 
-fn logging() {
-    CombinedLogger::init(vec![
-        TermLogger::new(
-            LevelFilter::Warn,
-            Config::default(),
-            TerminalMode::Mixed,
-            ColorChoice::Auto,
-        ),
-        WriteLogger::new(
-            LevelFilter::Info,
-            Config::default(),
-            File::create("system.txt").unwrap(),
-        ),
-    ])
-    .unwrap();
-
-    log::info!("System check started...");
-
-    let mut sys = System::new_all();
-    sys.refresh_all();
-
-    if let Some(k_ver) = System::kernel_version() {
-        info!("Kenrnel Version: {}", k_ver);
-    }
-    info!("Total Memory: {} KB", sys.total_memory());
-    info!("Active Processes: {}", sys.processes().len());
-
-    info!("System check completed.");
-}
-
-fn ui() {
+fn ui() { // This function handles the main user interface and menu logic
+    Logger::log_init();
     // This override prevents the 0xc000013a crash
     ctrlc::set_handler(move || {
         println!("\n[Signal] Ctrl+C detected! Exiting cleanly...");
@@ -203,7 +224,7 @@ fn ui() {
     })
     .expect("Error setting Ctrl-C handler");
 
-    loop {
+    loop { // Main menu loop
         print!("1. DDoS\n2. Git\n3. System Info\n4. Exit\n--> ");
         io::stdout().flush().unwrap();
 
@@ -212,7 +233,7 @@ fn ui() {
             break;
         }
         match input.trim() {
-            "1" => {
+            "1" => { // OLD NOT BEEN WORK ON 
                 let output = Command::new("python")
                     .arg("modules.py")
                     .output()
@@ -225,10 +246,10 @@ fn ui() {
                     eprintln!("Error: {}", String::from_utf8_lossy(&output.stderr));
                 }
             }
-            "2" => {
+            "2" => { // GIT AND AUR CLONE AND BUILD SERVICE
                 service();
             }
-            "3" => {
+            "3" => { // SYSTEM INFO LOGGING
                 logging();
             }
 
